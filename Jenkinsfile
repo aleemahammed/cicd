@@ -69,15 +69,16 @@ pipeline {
         }
 
         stage('Run Container') {
-            steps {
-                echo "🚀 Running container locally..."
-                sh """
-                    docker stop app || true
-                    docker rm app || true
-                    docker run -d -p 3000:3000 --name app ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO}:${IMAGE_TAG}
-                """
-            }
+           steps {
+        echo "🚀 Running container locally..."
+        sh """
+            docker stop app || true
+            docker rm app || true
+            docker run -d -p 80:3000 --name app ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO}:${IMAGE_TAG}
+        """
         }
+}
+
     }
 
     post {
