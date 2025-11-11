@@ -13,7 +13,7 @@ pipeline {
     options {
         skipDefaultCheckout()
         timestamps()
-        timeout(time: 60, unit: 'MINUTES') // Optional: auto-abort if pipeline hangs
+        timeout(time: 60, unit: 'MINUTES') // auto-abort if pipeline hangs
     }
 
     stages {
@@ -77,14 +77,15 @@ pipeline {
                     try {
                         sh """
                         ssh -o StrictHostKeyChecking=no ec2-user@${EC2_IP} '
-                        set -e
-                        echo "Stopping old container if exists..."
-                        docker stop app || true
-                        docker rm app || true
-                        echo "Pulling latest image from ECR..."
-                        docker pull ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO}:${IMAGE_TAG}
-                        echo "Running new container..."
-                        docker run -d -p 3000:3000 --name app ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO}:${IMAGE_TAG}
+                            set -e
+                            echo "Stopping old container if exists..."
+                            docker stop app || true
+                            docker rm app || true
+                            echo "Pulling latest image from ECR..."
+                            docker pull ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO}:${IMAGE_TAG}
+                            echo "Running new container..."
+                            docker run -d -p 3000:3000 --name app ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO}:${IMAGE_TAG}
+                            echo "Deployment completed!"
                         '
                         """
                     } catch(err) {
