@@ -2,11 +2,10 @@ pipeline {
     agent any
 
     environment {
-        AWS_ACCOUNT_ID = "831441088496"
-        AWS_REGION = "us-east-1"
-        IMAGE_REPO = "my-node-app"
+        AWS_ACCOUNT_ID = "523977236833"
+        AWS_REGION = "ap-south-1"
+        IMAGE_REPO = "cicd"
         IMAGE_TAG = "latest"
-        WORKSPACE_DIR = "/var/lib/jenkins/workspace/my-node-app-pipeline"
     }
 
     options {
@@ -20,17 +19,14 @@ pipeline {
         stage('Clean Workspace') {
             steps {
                 echo "🧹 Cleaning workspace..."
-                sh """
-                    sudo chown -R jenkins:jenkins ${WORKSPACE_DIR} || true
-                    rm -rf ${WORKSPACE_DIR}/*
-                """
+                cleanWs()   // safer than rm -rf
             }
         }
 
         stage('Checkout Code') {
             steps {
                 echo "🔄 Checking out code..."
-                git branch: 'main', url: 'https://github.com/nehanreddyloka/my-node-app.git'
+                git branch: 'main', url: 'https://github.com/aleemahammed/cicd.git'
             }
         }
 
@@ -51,10 +47,12 @@ pipeline {
         stage('Login to AWS ECR') {
             steps {
                 echo "🔑 Logging in to AWS ECR..."
-                sh """
-                    aws ecr get-login-password --region ${AWS_REGION} | \
-                    docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-                """
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
+                    sh """
+                        aws ecr get-login-password --region ${AWS_REGION} | \
+                        docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                    """
+                }
             }
         }
 
@@ -69,15 +67,15 @@ pipeline {
         }
 
         stage('Run Container') {
-           steps {
-        echo "🚀 Running container locally..."
-        sh """
-            docker stop app || true
-            docker rm app || true
-            docker run -d -p 80:3000 --name app ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO}:${IMAGE_TAG}
-        """
+            steps {
+                echo "🚀 Running container locally..."
+                sh """
+                    docker stop app || true
+                    docker rm app || true
+                    docker run -d -p 80:3000 --name app ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO}:${IMAGE_TAG}
+                """
+            }
         }
-}
 
     }
 
