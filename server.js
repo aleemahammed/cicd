@@ -5,7 +5,7 @@ app.get("/", (req, res) => {
   res.send(`
     <html>
       <head>
-        <title>CI/CD Deployment by aleem</title>
+        <title>CI/CD Deployment</title>
         <style>
           body {
             font-family: Arial, sans-serif;
