@@ -19,7 +19,7 @@ pipeline {
         stage('Clean Workspace') {
             steps {
                 echo "🧹 Cleaning workspace..."
-                cleanWs()   // safer than rm -rf
+                cleanWs()
             }
         }
 
@@ -33,7 +33,7 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 echo "📦 Installing npm dependencies..."
-                sh 'npm install --no-audit --no-fund --silent'
+                sh 'npm install'
             }
         }
 
@@ -47,7 +47,7 @@ pipeline {
         stage('Login to AWS ECR') {
             steps {
                 echo "🔑 Logging in to AWS ECR..."
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
+                withAWS(credentials: 'aws-creds', region: "${AWS_REGION}") {
                     sh """
                         aws ecr get-login-password --region ${AWS_REGION} | \
                         docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
@@ -58,7 +58,7 @@ pipeline {
 
         stage('Tag & Push Docker Image') {
             steps {
-                echo "📤 Tagging and pushing Docker image to ECR..."
+                echo "📤 Tagging and pushing Docker image..."
                 sh """
                     docker tag ${IMAGE_REPO}:${IMAGE_TAG} ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO}:${IMAGE_TAG}
                     docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO}:${IMAGE_TAG}
@@ -76,7 +76,6 @@ pipeline {
                 """
             }
         }
-
     }
 
     post {
@@ -84,7 +83,7 @@ pipeline {
             echo "🎉 Pipeline completed successfully!"
         }
         failure {
-            echo "❌ Pipeline failed! Check logs."
+            echo "❌ Pipeline failed! Fix above errors."
         }
     }
 }
